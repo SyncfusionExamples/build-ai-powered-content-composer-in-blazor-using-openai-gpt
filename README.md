@@ -1,6 +1,8 @@
 # Build an AI-Powered Content Composer in Blazor Using OpenAI GPT
 Learn how to build an AI-powered content composer using GPT-3.5 Turbo and Syncfusion Blazor components. Effortlessly create content on any topic and automatically adjust its tone, format, and length—all in one place.
 
+![A screenshot of AI-Powered Content Composer](ai-content-composer-gif.gif "AI-Powered Content Composer")
+
 ## Prerequisites
 - Visual Studio 2022 + ASP.NET & Web development environment
 - .NET 6.0 SDK or above versions
