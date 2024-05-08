@@ -1,0 +1,225 @@
+﻿@page "/"
+
+@using AIContentComposer.Services;
+@inject OpenAIService openAIService;
+
+<div class="row">
+    <div class="col-12 col-md-8">
+        <SfDocumentEditorContainer ID="Document" Height="700px" Width="780px" @ref="container" EnableToolbar=true ShowPropertiesPane=false>
+            <DocumentEditorContainerEvents Created="OnCreated" ContextMenuItemSelected="OnContextMenuSelect"></DocumentEditorContainerEvents>
+        </SfDocumentEditorContainer>
+    </div>
+    <div class="col-6 col-md-4 padding">
+        <SfTextBox CssClass="write-topic" Multiline="true" @bind-Value="@inputValue" FloatLabelType="FloatLabelType.Auto" Placeholder='Ask ChatGPT to write about any topic'></SfTextBox>
+        <div class="child-container">
+            <span class="chip-class">Tone</span>
+            @*Tone Chips*@
+            <SfChip Selection="SelectionType.Single" SelectedChips=@toneSelected>
+                <ChipEvents OnClick="@OnToneSelect"></ChipEvents>
+                <ChipItems>
+                    <ChipItem Text="Professional" CssClass="e-outline"></ChipItem>
+                    <ChipItem Text="Informal" CssClass="e-outline"></ChipItem>
+                    <ChipItem Text="Inspirational" CssClass="e-outline"></ChipItem>
+                    <ChipItem Text="Creative" CssClass="e-outline"></ChipItem>
+                    <ChipItem Text="Hilarious" CssClass="e-outline"></ChipItem>
+                    <ChipItem Text="Informational" CssClass="e-outline"></ChipItem>
+                    <ChipItem Text="Conversational" CssClass="e-outline"></ChipItem>
+                    <ChipItem Text="Fictitious" CssClass="e-outline"></ChipItem>
+                </ChipItems>
+            </SfChip>
+        </div>
+        <div class="child-container">
+            <span class="chip-class">Format</span>
+            @*Format Chips*@
+            <SfChip Selection="SelectionType.Single" SelectedChips=@formatSelected>
+                <ChipEvents OnClick="@OnFormatSelect"></ChipEvents>
+                <ChipItems>
+                    <ChipItem Text="Paragraph" CssClass="e-outline"></ChipItem>
+                    <ChipItem Text="Email" CssClass="e-outline"></ChipItem>
+                    <ChipItem Text="Blog Post" CssClass="e-outline"></ChipItem>
+                    <ChipItem Text="Bullet Points" CssClass="e-outline"></ChipItem>
+                    <ChipItem Text="LinkedIn Posts" CssClass="e-outline"></ChipItem>
+                    <ChipItem Text="Report" CssClass="e-outline"></ChipItem>
+                    <ChipItem Text="Poem" CssClass="e-outline"></ChipItem>
+                    <ChipItem Text="Review" CssClass="e-outline"></ChipItem>
+                    <ChipItem Text="Video Script" CssClass="e-outline"></ChipItem>
+                </ChipItems>
+            </SfChip>
+        </div>
+        <div class="child-container">
+            <span class="chip-class">Length</span>
+            @*Text Length Chips*@
+            <SfChip Selection="SelectionType.Single" SelectedChips=@lengthSelected>
+                <ChipEvents OnClick="@OnLengthSelect"></ChipEvents>
+                <ChipItems>
+                    <ChipItem Text="Short" CssClass="e-outline"></ChipItem>
+                    <ChipItem Text="Medium" CssClass="e-outline"></ChipItem>
+                    <ChipItem Text="Long" CssClass="e-outline"></ChipItem>
+                </ChipItems>
+            </SfChip>
+        </div>
+        <div class="child-container">
+            <SfButton @onclick="OnGenerateDraftClick" IsPrimary=true CssClass="customClass" Content="Generate draft"></SfButton>
+        </div>
+        <div class="child-container">
+            @if (isContentLoaded)
+            {
+                <div class="skeleton-wrapper">
+                    <SfSkeleton CssClass="skeletonText" Shape=SkeletonType.Text Width="100%" Height="15px"></SfSkeleton>
+                    <SfSkeleton Width="50%" Height="15px"></SfSkeleton><br />
+                    <SfSkeleton Width="35%" Height="15px"></SfSkeleton><br />
+                    <SfSkeleton Width="60%" Height="15px"></SfSkeleton><br />
+                    <SfSkeleton Width="25%" Height="15px"></SfSkeleton>
+                </div>
+            }
+            else
+            {
+                <SfTextBox Readonly="true" CssClass="preview" Multiline="true" @bind-Value="@previewContent" FloatLabelType="FloatLabelType.Auto" Placeholder='Preview'></SfTextBox>
+            }
+        </div>
+        <div class="child-container">
+            <SfButton @onclick="OnAddDocumentClick" IsPrimary=true CssClass="customClass" Content="Add to document"></SfButton>
+        </div>
+    </div>
+</div>
+
+<SfDialog IsModal="true" Width="280px" @bind-Visible="@isVisible">
+    <DialogTemplates>
+        <Header> Summary </Header>
+        <Content> @generatedText </Content>
+    </DialogTemplates>
+    <DialogButtons>
+        <DialogButton Content="Dismiss" IsPrimary="true" OnClick="@CloseDialog" />
+    </DialogButtons>
+</SfDialog>
+
+<SfDialog IsModal="true" AllowDragging="true" Width="650px" Target="#Document" ShowCloseIcon="true" @bind-Visible="isInlineDialogVisible">
+    <DialogEvents OnClose="OnDialogClose"></DialogEvents>
+    <DialogTemplates>
+        <Header>
+            Here is an alternative way to express
+        </Header>
+        <Content>
+            <div class="rephrase-text">
+                @if (isRephraseContentLoaded)
+                {
+                    <SfSkeleton CssClass="skeletonText" Shape=SkeletonType.Text Width="100%" Height="15px"></SfSkeleton>
+                    <SfSkeleton Width="50%" Height="15px"></SfSkeleton>
+
+                    <br />
+                    <SfSkeleton Width="35%" Height="15px"></SfSkeleton>
+
+                    <br />
+                    <SfSkeleton Width="60%" Height="15px"></SfSkeleton>
+
+                    <br />
+                    <SfSkeleton Width="25%" Height="15px"></SfSkeleton>
+                }
+                else
+                {
+                    @rephrasedText
+                }
+            </div>
+        </Content>
+        <FooterTemplate>
+            <div class="dialog-footer-left-buttons">
+                <SfDropDownList Width="115px" PopupWidth="115px" PopupHeight="230px" TValue="string" TItem="ComposeContent" Placeholder="Tone" DataSource="@toneData">
+                    <DropDownListFieldSettings Value="ID" Text="Text"></DropDownListFieldSettings>
+                    <DropDownListEvents TValue="string" TItem="ComposeContent" ValueChange="OnToneChange"></DropDownListEvents>
+                </SfDropDownList>
+                <SfDropDownList Width="120px" CssClass="margin" PopupWidth="120px" PopupHeight="230px" TValue="string" TItem="ComposeContent" Placeholder="Format" DataSource="@formatData">
+                    <DropDownListFieldSettings Value="ID" Text="Text"></DropDownListFieldSettings>
+                    <DropDownListEvents TValue="string" TItem="ComposeContent" ValueChange="OnFormatChange"></DropDownListEvents>
+                </SfDropDownList>
+                <SfDropDownList Width="110px" CssClass="margin" PopupWidth="110px" PopupHeight="150px" TValue="string" TItem="ComposeContent" Placeholder="Length" DataSource="@lengthData">
+                    <DropDownListFieldSettings Value="ID" Text="Text"></DropDownListFieldSettings>
+                    <DropDownListEvents TValue="string" TItem="ComposeContent" ValueChange="OnLengthChange"></DropDownListEvents>
+                </SfDropDownList>
+                <button @onclick="@OnRewriteClick" class="e-control e-btn e-primary" data-ripple="true">Regenerate</button>
+            </div>
+            <div class="dialog-footer-right-buttons">
+                <button @onclick="@OnReplaceClick" class="e-control e-btn e-primary custom-class" data-ripple="true">Add to Document</button>
+            </div>
+        </FooterTemplate>
+    </DialogTemplates>
+</SfDialog>
+
+<style>
+
+    .padding {
+        padding-left: 20px;
+    }
+
+    .dialog-footer-right-buttons {
+        float: right;
+        padding-right: 10px;
+    }
+
+    .dialog-footer-left-buttons {
+        float: left;
+        padding-left: 10px;
+    }
+
+    .skeleton-wrapper {
+        width: 100%; /* 350px; */
+        height: 175px;
+        border: 1px solid #ced4da;
+        margin-top: 24px;
+        padding: 8px;
+    }
+
+    .write-topic {
+        height: 75px;
+    }
+
+    .preview {
+        height: 175px;
+    }
+
+    .customClass {
+        width: 100%;
+    }
+
+    .child-container {
+        padding-top: 20px;
+    }
+
+    .chip-class {
+        font-size: 14px;
+    }
+
+    .custom-class {
+        background: green !important;
+        border-color: green !important;
+    }
+
+    .margin {
+        margin-left: 5px;
+    }
+
+    .rephrase-text {
+        border: 1px solid #dee2e6;
+        padding: 12px;
+    }
+
+    .e-dialog .e-dlg-content {
+        padding: 20px !important;
+        padding-bottom: 12px !important;
+    }
+
+    .e-dialog .e-dlg-header-content {
+        border-bottom: none !important;
+        padding-left: 20px !important;
+        padding-bottom: 0 !important;
+    }
+
+    .e-dialog .e-footer-content {
+        border-top: none !important;
+    }
+
+    .e-chip-list .e-chip.e-outline {
+        font-size: 12px !important;
+        line-height: 1.5 !important;
+    }
+
+</style>
