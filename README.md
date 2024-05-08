@@ -15,6 +15,6 @@ Learn how to build an AI-powered content composer using GPT-3.5 Turbo and Syncfu
 ## Run the Application
 To run this application, download this example and open it in Visual Studio 2022. 
 - Use your own OpenAI API key in the `appsettings.json` file.
-- Open Program.cs file, register your [Syncfusion license key](https://blazor.syncfusion.com/documentation/getting-started/license-key/how-to-generate).
+- Open `Program.cs` file, register your [Syncfusion license key](https://blazor.syncfusion.com/documentation/getting-started/license-key/how-to-generate).
 - Build and run the application.
 
