@@ -21,7 +21,7 @@ namespace AIContentComposer.Services
             {
                 var options = new ChatCompletionsOptions()
                 {
-                    DeploymentName = "gpt-3.5-turbo",
+                    DeploymentName = "gpt-3.5-turbo", // Specify the gpt model here for non-Azure clients
                     Messages =
                     {
                         new ChatRequestSystemMessage("You are a helpful assistant." + systemMessage),
